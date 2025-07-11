@@ -1,11 +1,13 @@
 {
   "name": "mcp-server-template",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "dev": "ts-node src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "debug": "npx @modelcontextprotocol/inspector DANGEROUSLY_OMIT_AUTH=true"
   },
   "keywords": [],
   "author": "",

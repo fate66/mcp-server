@@ -13,6 +13,8 @@ const logger = createLogger({
   ),
   transports: [
     new transports.Console(),
+    new transports.File({ filename: 'logs/app.log', level: 'info' }),
+    new transports.File({ filename: 'logs/error.log', level: 'error' }),
     // 可扩展文件日志等
   ],
 });
