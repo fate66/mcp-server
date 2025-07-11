@@ -3,7 +3,7 @@
     "target": "es2019", // 适合Node.js 12+，可根据实际Node版本调整
     "module": "ESNext", // 使用ES模块
     "moduleResolution": "node",
-    "outDir": "./dist",
+    "outDir": "./build",
     "rootDir": "./src",
     "declaration": false,
     "sourceMap": false,
@@ -17,8 +17,12 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "build"]
 }

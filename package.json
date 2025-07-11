@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "build": "tsc",
+    "build": "npm run clean && tsc && tsc-alias",
     "start": "node dist/index.js",
+    "clean": "rm -rf ./build",
     "debug": "npx @modelcontextprotocol/inspector DANGEROUSLY_OMIT_AUTH=true"
   },
   "keywords": [],
@@ -20,6 +21,7 @@
     "eslint": "^9.30.1",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.8.3"
   },
   "dependencies": {
