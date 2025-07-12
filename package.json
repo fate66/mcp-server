@@ -15,6 +15,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@modelcontextprotocol/inspector": "0.16.1",
     "@types/node": "^24.0.13",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
     "@typescript-eslint/parser": "^8.36.0",
@@ -26,6 +27,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.15.1",
-    "winston": "^3.17.0"
+    "axios": "^1.10.0",
+    "winston": "^3.17.0",
+    "zod": "^3.25.76"
   }
 }
