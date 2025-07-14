@@ -1,30 +1,64 @@
-export interface Definitions {
-  [key: string]: {
-    /** 数据类型 */
-    type: string
-    /** 属性定义 */
-    properties: {
-      [key: string]: {
-        /** 属性类型 */
-        type?: string
-        /** 属性描述 */
-        description?: string
-        /** 引用其他模型 */
+import { ParameterInEnum } from '@/utils/enum.js'
+
+export { ParameterInEnum }
+
+export interface DefinitionModel {
+  /** 数据类型 */
+  type: string
+  /** 属性定义 */
+  properties: {
+    [key: string]: {
+      /** 属性类型 */
+      type?: string
+      /** 属性描述 */
+      description?: string
+      /** 引用其他模型 */
+      $ref?: string
+      /** 数组项定义 */
+      items?: {
+        /** 数组项类型 */
+        originalRef?: string
+        /** 数组项引用的模型 */
         $ref?: string
-        /** 数组项定义 */
-        items?: {
-          /** 数组项引用的模型 */
-          $ref?: string
-          /** 数组项类型 */
-          type?: string
-        }
       }
     }
-    /** 模型标题 */
-    title?: string
-    /** 必需字段列表 */
-    required?: string[]
   }
+  /** 模型标题 */
+  title?: string
+  /** 必需字段列表 */
+  required?: string[]
+}
+
+export interface Schema {
+  originalRef?: string // 原始引用
+  $ref?: string // 引用
+  type?: string // 类型
+}
+
+export interface Definitions {
+  [key: string]: DefinitionModel
+}
+
+export interface Parameter {
+  /** 参数名称 */
+  name: string
+  /** 参数位置（path, query, header, body, formData） */
+  in: ParameterInEnum
+  /** 参数描述 */
+  description?: string
+  /** 是否必需 */
+  required?: boolean
+  /** 参数类型 */
+  type?: string
+  /** 参数模式定义 */
+  schema?: Schema
+  /** 默认值 */
+  default?: any
+}
+
+export interface Response {
+  description: string
+  schema?: Schema
 }
 
 export interface methodDefinition {
@@ -41,84 +75,16 @@ export interface methodDefinition {
   /** 响应内容类型 */
   produces?: string[]
   /** 请求参数定义 */
-  parameters?: Array<{
-    /** 参数名称 */
-    name: string
-    /** 参数位置（path, query, header, body, formData） */
-    in: string
-    /** 参数描述 */
-    description?: string
-    /** 是否必需 */
-    required?: boolean
-    /** 参数类型 */
-    type?: string
-    /** 参数模式定义 */
-    schema?: {
-      /** 引用的模型 */
-      $ref?: string
-      /** 参数类型 */
-      type?: string
-    }
-    default?: any
-  }>
+  parameters?: Array<Parameter>
   /** 响应定义 */
   responses: {
-    [code: string]: {
-      /** 响应描述 */
-      description: string
-      /** 响应数据模式 */
-      schema?: {
-        /** 引用的响应模型 */
-        $ref?: string
-        /** 响应数据类型 */
-        type?: string
-        /** 数组响应项定义 */
-        items?: {
-          /** 数组项引用的模型 */
-          $ref?: string
-        }
-      }
-    }
+    [code: string]: Response
   }
 }
-export interface ApiDefinition extends Omit<methodDefinition, 'responses' | 'parameters'> {
+export interface ApiDefinition extends Omit<methodDefinition, 'responses'> {
   fullPath: string
   method: string
-  responses: {
-    /** 响应描述 */
-    description: string
-    /** 响应数据模式 */
-    schema?: {
-      /** 引用的响应模型 */
-      $ref?: string
-      /** 响应数据类型 */
-      type?: string
-      /** 数组响应项定义 */
-      items?: {
-        /** 数组项引用的模型 */
-        $ref?: string
-      }
-    }
-  }
-  parameters: {
-    /** 参数名称 */
-    name: string
-    /** 参数位置 */
-    in: string
-    /** 参数描述 */
-    description?: string
-    /** 是否必需 */
-    required?: boolean
-    /** 参数类型 */
-    type?: string
-    /** 参数模式定义 */
-    schema?: {
-      /** 引用的模型 */
-      $ref?: string
-      /** 参数类型 */
-      type?: string
-    }
-  }
+  response: Response
 }
 
 export interface Path {

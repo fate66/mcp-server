@@ -22,5 +22,4 @@ declare namespace NodeJS {
     // 可以添加更多环境变量类型
   }
 }
-
 export {}

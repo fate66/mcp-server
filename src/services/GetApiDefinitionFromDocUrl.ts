@@ -1,10 +1,19 @@
 /**
  * 获取 Swagger 定义服务
  */
+import SwaggerParser from '@apidevtools/swagger-parser'
 
 import logger from '@/utils/logger.js'
 import axios from 'axios'
-import { ApiDefinition, SwaggerInfo } from '@/services/interfaces'
+import {
+  ApiDefinition,
+  SwaggerInfo,
+  Parameter,
+  Response,
+  ParameterInEnum,
+  Path,
+} from '@/services/interfaces.js'
+import { resolveRefs } from '@/utils/utils.js'
 
 // 获取 Swagger 定义
 export default class GetApiDefinitionFromDocUrl {
@@ -51,80 +60,119 @@ export default class GetApiDefinitionFromDocUrl {
     }
   }
 
-  async getApiDefinition() {
-    const response = await axios.get(this.swaggerJsonUrl)
-    // 验证响应是否为有效的 Swagger 定义
-    // 检查是否包含 openapi 或 swagger 字段
-    if (!response.data.openapi && !response.data.swagger) {
-      logger.error(`Invalid DocUrl: ${this.docUrl}`)
-      throw new Error('Invalid DocUrl') // 无效的 DocUrl
-    }
-
-    const swaggerInfo = response.data as SwaggerInfo
-
-    this.swaggerInfo = swaggerInfo
-    logger.info(`正在查找 operationId: ${this.operationId}`)
-    if (swaggerInfo) {
-      for (const path in swaggerInfo.paths) {
-        // path  /tradition/cost/auctionItems
-        if (Object.prototype.hasOwnProperty.call(swaggerInfo.paths, path)) {
-          const methods = swaggerInfo.paths[path]
-          // methods  { post: { operationId: 'auctionItemsUsingPOST', ... } }
-          for (const method in methods) {
-            if (Object.prototype.hasOwnProperty.call(methods, method)) {
-              // method  post
-              // methodDefinition  { operationId: 'auctionItemsUsingPOST', ... }
-              const methodDefinition = methods[method]
-              if (methodDefinition.operationId === this.operationId) {
-                logger.info(`找到匹配的接口: ${method.toUpperCase()} ${path}`)
-                let paramsRes = {}
-                for (const params of methodDefinition.parameters || []) {
-                  if (params.in === 'body') {
-                    logger.info(`接口参数: ${params.name} (${params.in})`)
-                    if (params.schema && params.schema.$ref) {
-                      logger.info(`参数类型引用: ${params.schema.$ref}`)
-                      // 这里可以根据需要进一步处理引用的类型
-                      // #/definitions/CostAuctionItemsDTO
-                      const refParts = params.schema.$ref.split('/')
-                      if (refParts.length === 3) {
-                        const typeName = refParts[refParts.length - 1]
-                        logger.info(`参数类型名称: ${typeName}`)
-                        paramsRes = swaggerInfo.definitions[typeName] || {}
-                      }
-                    }
-                  }
-                }
-                let responsesRes = {}
-                const ref = methodDefinition.responses['200'].schema!.$ref
-                if (ref) {
-                  logger.info(`响应类型引用: ${ref}`)
-                  // 这里可以根据需要进一步处理引用的类型
-                  // #/definitions/CostAuctionItemsDTO
-                  const refParts = ref.split('/')
-                  const typeName = refParts[refParts.length - 1]
-                  logger.info(`参数类型名称: ${typeName}`)
-                  responsesRes = (swaggerInfo.definitions[typeName] || {}) as any
-                }
-
-                this.apiDefinition = {
-                  fullPath: swaggerInfo.basePath + path,
-                  method: method.toUpperCase(),
-                  ...methodDefinition,
-                  responses: responsesRes as any,
-                  parameters: paramsRes as any,
-                }
-                this.apiPath = path
-                this.fullApiPath = swaggerInfo.basePath + path
-                return this.apiDefinition
+  private filterPath(swaggerInfo: SwaggerInfo, operationId: string) {
+    let paths: Path = {}
+    for (const path in swaggerInfo.paths) {
+      // path 示例： /micro/contract/manager/v2/auctionItems
+      if (Object.prototype.hasOwnProperty.call(swaggerInfo.paths, path)) {
+        // methods 示例： { get: { operationId: 'getAuctionItems', ... }, post: { operationId: 'postAuctionItems', ... } }
+        const methods = swaggerInfo.paths[path]
+        for (const method in methods) {
+          if (Object.prototype.hasOwnProperty.call(methods, method)) {
+            const methodDefinition = methods[method]
+            if (methodDefinition.operationId === operationId) {
+              logger.info(`找到匹配的接口: ${method.toUpperCase()} ${path}`)
+              paths[path] = {
+                [method]: methodDefinition,
               }
             }
           }
         }
       }
-    } else {
-      logger.error(`未找到匹配的接口 operationId: ${this.operationId}`)
-      throw new Error(`未找到匹配的接口: ${this.operationId}`)
     }
-    return null
+    return paths
+  }
+  // private checkParamIsSchema(param: Parameter): boolean {
+  //   return !!(param.schema && param.schema.$ref)
+  // }
+
+  async getApiDefinition() {
+    const response = await axios.get(this.swaggerJsonUrl)
+    if (!response.data.openapi && !response.data.swagger) {
+      logger.error(`Invalid DocUrl: ${this.docUrl}`)
+      throw new Error('Invalid DocUrl')
+    }
+    let swaggerInfo = (response.data || {}) as SwaggerInfo
+    swaggerInfo = resolveRefs(swaggerInfo)
+    this.swaggerInfo = swaggerInfo
+    const paths = this.filterPath(swaggerInfo, this.operationId)
+    swaggerInfo.paths = paths
+    // @ts-ignore
+    const dereferenced = (await SwaggerParser.dereference(swaggerInfo, {
+      continueOnError: true,
+      resolve: {
+        file: false,
+        http: false,
+        external: false, // 允许任何外部 $ref
+      },
+      // or 你也可以只在 debug 模式下跳过
+      // dereference: { circular: 'ignore' }
+      dereference: {
+        internal: true,
+        external: false, // ← 和 resolve.external 保持一致
+        circular: 'ignore',
+      },
+    })) as any
+
+    logger.info(`找到匹配的接口: ${dereferenced.paths}`)
+    return dereferenced.paths
+  }
+
+  async getApiDefinition2(): Promise<ApiDefinition> {
+    const response = await axios.get(this.swaggerJsonUrl)
+    if (!response.data.openapi && !response.data.swagger) {
+      logger.error(`Invalid DocUrl: ${this.docUrl}`)
+      throw new Error('Invalid DocUrl')
+    }
+    const swaggerInfo = response.data as SwaggerInfo
+    this.swaggerInfo = swaggerInfo
+    logger.info(`正在查找 operationId: ${this.operationId}`)
+    for (const path in swaggerInfo.paths) {
+      if (Object.prototype.hasOwnProperty.call(swaggerInfo.paths, path)) {
+        const methods = swaggerInfo.paths[path]
+        for (const method in methods) {
+          if (Object.prototype.hasOwnProperty.call(methods, method)) {
+            const methodDefinition = methods[method]
+            if (methodDefinition.operationId === this.operationId) {
+              logger.info(`找到匹配的接口: ${method.toUpperCase()} ${path}`)
+              // 处理参数
+              let parameters: Parameter[] = []
+              for (const param of methodDefinition.parameters || []) {
+                if (param.in === ParameterInEnum.body) {
+                  logger.info(`接口参数: ${param.name} (${param.in})`)
+                }
+                if (param.in === ParameterInEnum.query) {
+                  logger.info(`接口参数: ${param.name} (${param.in})`)
+                }
+              }
+              // 处理响应
+              let response: Response | undefined = undefined
+              const resp200 = methodDefinition.responses['200']
+              if (resp200 && resp200.schema) {
+                logger.info(`响应类型: ${JSON.stringify(resp200.schema)}`)
+                response = {
+                  ...resp200,
+                }
+              } else if (resp200) {
+                response = resp200
+              }
+              // 构造 ApiDefinition
+              const apiDef: ApiDefinition = {
+                fullPath: swaggerInfo.basePath + path,
+                method: method.toUpperCase(),
+                ...methodDefinition,
+                response: response!,
+              }
+              this.apiDefinition = apiDef
+              this.apiPath = path
+              this.fullApiPath = swaggerInfo.basePath + path
+              return apiDef
+            }
+          }
+        }
+      }
+    }
+    logger.error(`未找到匹配的接口 operationId: ${this.operationId}`)
+    throw new Error(`未找到匹配的接口: ${this.operationId}`)
   }
 }

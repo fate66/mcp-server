@@ -23,10 +23,9 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["node"],
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "lib": ["ES2020"]
   },
-  "include": ["src", "src/**/*"],
+  "include": ["src"],
   "exclude": ["node_modules", "build", "dist"]
 }
