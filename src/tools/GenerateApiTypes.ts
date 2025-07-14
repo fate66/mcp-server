@@ -37,10 +37,24 @@ class GenerateApiTypes {
           content: [
             {
               type: 'text',
-              text: `请将下面的 OpenAPI 接口，生成 TS 类型定义，然后添加到${input.filePath}文件中  \n${JSON.stringify(
+              text: `
+              你是一名资深的 TypeScript工程师。  
+              你的任务是：
+              1. **解析以下 Swagger 片段**。  
+              2. **生成**  
+                a. 对应所有请求 DTO 和响应 VO 的 TypeScript "interface" 声明 ，注释要标明当前interface是请求还是响应 
+                b. 如果返回数据是分页格式，则生成一个通用的 "PagedResponse<T>" 泛型类型。  
+                c. 一个按照我们项目约定的、基于 "axios" 的类型化 HTTP 请求函数，
+                d. 确保输出中包含 Swagger定义里的每一个字段，类型准确无误，并且将Swagger中的接口、类型和字段的注释添加到TS中。
+                e.严格一一对应 Swagger 端点，不增不减
+                f. 接口的header中的参数忽略
+                g. 生成的样式如下：
+                   // ================== 费用审核拍品详情接口类型定义 ==================
+                   // 请求DTO
+                   // 响应VO
+
+              请将下面的 Swagger 接口，生成 TS 类型定义，然后添加到${input.filePath}文件中  \n${JSON.stringify(
                 jsonString,
-                null,
-                2,
               )}`,
             },
           ],
