@@ -8,7 +8,7 @@ import axios from 'axios'
 import {
   ApiDefinition,
   SwaggerInfo,
-  Parameter,
+  // Parameter,
   Response,
   ParameterInEnum,
   Path,
@@ -136,7 +136,7 @@ export default class GetApiDefinitionFromDocUrl {
             if (methodDefinition.operationId === this.operationId) {
               logger.info(`找到匹配的接口: ${method.toUpperCase()} ${path}`)
               // 处理参数
-              let parameters: Parameter[] = []
+              // let parameters: Parameter[] = []
               for (const param of methodDefinition.parameters || []) {
                 if (param.in === ParameterInEnum.body) {
                   logger.info(`接口参数: ${param.name} (${param.in})`)

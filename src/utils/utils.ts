@@ -1,7 +1,7 @@
 import { SwaggerInfo } from '@/services/interfaces.js'
 
 export function resolveRefs(swagger: SwaggerInfo) {
-  const definitions = swagger.definitions || {}
+  // const definitions = swagger.definitions || {}
 
   // Helper function to resolve $ref path and check if the target exists
   function resolveRef(ref: string) {
