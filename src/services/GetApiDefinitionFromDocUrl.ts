@@ -115,7 +115,14 @@ export default class GetApiDefinitionFromDocUrl {
     })) as any
 
     logger.info(`找到匹配的接口: ${dereferenced.paths}`)
-    return dereferenced.paths
+    
+    // 添加 basePath 到返回结果中，避免路径前缀丢失
+    const result = {
+      basePath: swaggerInfo.basePath || '',
+      paths: dereferenced.paths,
+    }
+    
+    return result
   }
 
   async getApiDefinition2(): Promise<ApiDefinition> {

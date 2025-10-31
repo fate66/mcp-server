@@ -63,7 +63,7 @@ class GenerateApiTypes {
 ### 1. 命名规范
 - **请求 DTO**：\`{接口功能名}RequestDTO\`（如：\`GetUserInfoRequestDTO\`）
 - **响应 VO**：\`{接口功能名}ResponseVO\`（如：\`GetUserInfoResponseVO\`）
-- **请求函数**：根据接口路径和功能自动生成驼峰命名（如：\`/user/info\` → \`getUserInfo\`）
+- **请求函数**：根据接口路径和功能自动生成驼峰命名，**必须以 Api 结尾**（如：\`/user/info\` → \`getUserInfoApi\`）
 
 ### 2. 类型映射规则
 - Swagger \`integer\` → TypeScript \`number\`
@@ -127,7 +127,7 @@ export interface {功能名}ResponseVO {
  * @returns {Promise<{返回类型}<{功能名}ResponseVO>>} 响应数据
  * @async
  */
-export function {functionName}(
+export function {functionName}Api(
   参数列表
 ): Promise<{项目返回类型}<{功能名}ResponseVO>> {
   return {http实例}.{method}<{功能名}ResponseVO>(
@@ -140,6 +140,7 @@ export function {functionName}(
 \`\`\`
 
 ### 5. 重要要求
+- ✅ **请求函数命名必须以 Api 结尾**（如：\`getUserInfoApi\`、\`fetchContractListApi\`）
 - ✅ **必须包含所有 Swagger 定义的字段**，不得遗漏
 - ✅ **保留所有 Swagger 注释**，使用中文 JSDoc 注释
 - ✅ **每个 interface 的注释必须标注是【请求】还是【响应】**，格式：\`/** 【请求】接口描述 */\` 或 \`/** 【响应】接口描述 */\`
@@ -152,7 +153,25 @@ export function {functionName}(
 - ❌ **不要自己创造返回值类型**，必须使用项目中已有的
 - ❌ **不要忽略任何字段**
 
-### 6. 特殊情况处理
+### 6. 接口路径处理（重要）
+⚠️ **Swagger 定义中有 \`basePath\` 和 \`paths\` 两部分**：
+- \`basePath\`：如 \`/gdmall/basics\`
+- \`paths\`：如 \`/micro/contract/manager/v2/list\`
+- **完整路径 = basePath + path**
+- **生成的接口函数中必须使用完整路径**
+
+例如：
+\`\`\`json
+{
+  "basePath": "/gdmall/basics",
+  "paths": {
+    "/micro/contract/list": { ... }
+  }
+}
+\`\`\`
+生成的函数应该使用：\`/gdmall/basics/micro/contract/list\`
+
+### 7. 特殊情况处理
 - 如果接口有路径参数（如 \`/user/{id}\`），将其作为函数的独立参数
 - 如果接口有分页参数（如 \`pageNo\`、\`size\`），也作为独立参数
 - 如果枚举值是数字，使用 \`enum Name { Value1 = 1, Value2 = 2 }\`
